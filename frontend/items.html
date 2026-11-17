@@ -4,15 +4,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DashDrop - Items</title>
+    <title>DashDrop - Find What You Need</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 
-<body>
+<body class="browse-page-body">
+
+    <!-- Ambient Glow Circles -->
+    <div class="ambient-glow glow-top-left"></div>
+    <div class="ambient-glow glow-top-right"></div>
+    <div class="ambient-glow glow-bottom-left"></div>
 
     <!-- Navigation Bar -->
-    <header class="navbar">
-        <div class="logo">DashDrop</div>
+    <header class="navbar navbar-floating">
+        <div class="logo">
+            <span class="logo-text">DashDrop</span>
+        </div>
 
         <nav>
             <a href="items.html" class="active">Items</a>
@@ -21,114 +31,215 @@
             <a href="account.html">Account Details</a>
         </nav>
 
-        <button class="login-btn" onclick="goToItems()">
-            Student Portal
+        <button class="login-btn" onclick="openAuthModal('login')">
+            Login
         </button>
     </header>
 
-    <!-- Items Page -->
-    <main class="items-page">
+    <!-- Main Content Container -->
+    <main class="modern-browse-container">
 
-        <section class="items-header">
-            <h1>Find What You Need</h1>
-            <p>Buy, borrow, and discover useful items from your campus community.</p>
+        <!-- Page Header -->
+        <section class="browse-hero-header">
+            <h1 class="browse-title">Find What You Need</h1>
+            <p class="browse-subtitle">Buy, borrow, and discover useful items from your campus community.</p>
         </section>
 
-        <!-- Search -->
-        <div class="search-box">
+        <!-- Search Bar with Blue Pill Button -->
+        <div class="search-box-modern">
             <input type="text" id="searchInput" placeholder="Search items by name, category or description...">
-            <button onclick="searchItems()">🔍 Search</button>
+            <button type="button" class="search-action-btn" onclick="searchItems()">
+                <span class="search-dot">•</span> Search
+            </button>
         </div>
 
-        <!-- Categories -->
-        <div class="categories" id="categoryContainer">
-            <button class="active" onclick="filterCategory('all', this)">All</button>
-            <button onclick="filterCategory('electronics', this)">Electronics</button>
-            <button onclick="filterCategory('books', this)">Books</button>
-            <button onclick="filterCategory('furniture', this)">Furniture</button>
-            <button onclick="filterCategory('clothes', this)">Clothes</button>
-            <button onclick="filterCategory('others', this)">Others</button>
+        <!-- Category Filter Pills -->
+        <div class="categories-pill-row" id="categoryContainer">
+            <button class="cat-pill active" onclick="filterCategory('all', this)">All</button>
+            <button class="cat-pill" onclick="filterCategory('electronics', this)">Electronics</button>
+            <button class="cat-pill" onclick="filterCategory('books', this)">Books</button>
+            <button class="cat-pill" onclick="filterCategory('furniture', this)">Furniture</button>
+            <button class="cat-pill" onclick="filterCategory('clothes', this)">Clothes</button>
+            <button class="cat-pill" onclick="filterCategory('others', this)">Others</button>
         </div>
 
-        <!-- Hostel / Block Location Filter Bar -->
-        <div class="block-filter-wrapper" style="margin: 0 auto 24px; max-width: 1200px; display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap;">
-            <span style="font-size: 13px; font-weight: 600; color: #4b5563; display: flex; align-items: center; gap: 4px;">
-                📍 Campus Location:
-            </span>
-            <div id="blockFilterContainer" class="block-filters" style="display: flex; gap: 6px; flex-wrap: wrap;">
-                <button class="block-filter-btn active" onclick="filterHostelBlock('all', this)">🏠 All Blocks</button>
-                <button class="block-filter-btn" onclick="filterHostelBlock('Block A', this)">🏢 Block A</button>
-                <button class="block-filter-btn" onclick="filterHostelBlock('Block B', this)">🏢 Block B</button>
-                <button class="block-filter-btn" onclick="filterHostelBlock('Block C', this)">🏢 Block C</button>
-                <button class="block-filter-btn" onclick="filterHostelBlock('Block D', this)">🏢 Block D</button>
-                <button class="block-filter-btn" onclick="filterHostelBlock('Academic / Library', this)">🎓 Academic / Library</button>
-                <button class="block-filter-btn" onclick="filterHostelBlock('Off-Campus', this)">🏡 Off-Campus</button>
+        <!-- Campus Location / Hostel Blocks Row -->
+        <div class="campus-location-row">
+            <span class="location-label">📍 Campus Location:</span>
+            <div class="location-chips-scroll" id="blockFilterContainer">
+                <button class="loc-chip active" onclick="filterHostelBlock('all', this)">🏠 All Blocks</button>
+                <button class="loc-chip" onclick="filterHostelBlock('Block A', this)">🏢 Block A</button>
+                <button class="loc-chip" onclick="filterHostelBlock('Block B', this)">🏢 Block B</button>
+                <button class="loc-chip" onclick="filterHostelBlock('Block C', this)">🏢 Block C</button>
+                <button class="loc-chip" onclick="filterHostelBlock('Block D', this)">🏢 Block D</button>
+                <button class="loc-chip" onclick="filterHostelBlock('Academic / Library', this)">🎓 Academic / Library</button>
+                <button class="loc-chip" onclick="filterHostelBlock('Off-Campus', this)">🏡 Off-Campus</button>
             </div>
         </div>
 
-        <!-- Item Grid -->
-        <section class="item-grid" id="itemsGrid">
-            <!-- Dynamic items rendered via script.js -->
+        <!-- Items Grid with Modern Clean White Cards -->
+        <section class="modern-card-grid" id="itemsGrid">
+            <!-- Dynamically populated by script.js -->
         </section>
 
         <!-- Pagination Controls -->
-        <div id="paginationContainer" style="display: flex; justify-content: center; align-items: center; gap: 12px; margin: 30px auto; max-width: 600px;">
+        <div id="paginationContainer" class="pagination-bar">
             <!-- Rendered dynamically by script.js -->
         </div>
 
     </main>
 
-    <!-- Item Details Modal Popup -->
+    <!-- Item Details Modal (Matches Image 3) -->
     <div class="modal-overlay" id="itemModal">
-        <div class="modal-card" style="max-width:680px; width:95%;">
+        <div class="modal-card modal-card-product" id="productModalCard">
             <button class="modal-close" onclick="closeModal()">&times;</button>
-            <div class="modal-icon" id="modalIcon">📦</div>
-            <h3 id="modalTitle">Item Details</h3>
-            <span class="modal-category" id="modalCategory">Category</span>
-            <p id="modalDesc">Description of the item.</p>
-            <div class="modal-footer">
-                <span class="price" id="modalPrice">₹0</span>
-                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                    <button class="contact-btn" id="contactSellerBtn" onclick="contactSeller()" style="background: #4f46e5;">📞 Contact</button>
-                    <button class="contact-btn" id="buyItemBtn" onclick="buyCurrentItem()" style="background: #10b981;">🛍️ Buy Now</button>
-                    <button class="contact-btn" id="openChatBtn" onclick="toggleChatPanel()" style="background: #ec4899;">💬 Chat with Seller</button>
+            
+            <div class="product-modal-grid">
+                <!-- Left: Big Product Image & Thumbnails Carousel -->
+                <div class="product-gallery-pane">
+                    <div class="main-gallery-preview" id="galleryMainPreview">
+                        <img id="modalProductImage" src="https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=600&q=80" alt="Item preview">
+                    </div>
+                    <div class="gallery-thumbnails-strip" id="galleryThumbs">
+                        <!-- Clickable thumbnails -->
+                    </div>
                 </div>
-            </div>
 
-            <!-- ── INLINE CHAT PANEL ── -->
-            <div id="chatPanel" class="chat-panel" style="display:none;">
-                <div class="chat-panel-header">
-                    <span>💬 Chat with Seller</span>
-                    <span id="chatTypingIndicator" class="chat-typing"></span>
+                <!-- Right: Product Details, Duration Selector & Action -->
+                <div class="product-details-pane">
+                    <div class="product-header-line">
+                        <h2 class="product-heading" id="modalTitle">Fujifilm Instax Mini Camera</h2>
+                        <span class="condition-badge" id="modalConditionTag">Like New</span>
+                    </div>
+
+                    <!-- Rating & Reviews -->
+                    <div class="product-rating-line">
+                        <span class="stars-gold">⭐ <span id="modalRatingVal">4.8</span></span>
+                        <span class="reviews-count">(<span id="modalReviewsVal">12</span> reviews)</span>
+                    </div>
+
+                    <!-- Description -->
+                    <p class="product-desc-text" id="modalDesc">
+                        Perfect for capturing campus memories. Includes 10 shots of film. Available for quick pickup!
+                    </p>
+
+                    <!-- Campus Location & Pickup Badge -->
+                    <div class="campus-badge-group">
+                        <label class="section-micro-label">Campus Location & Pickup Badge</label>
+                        <div class="location-pill-badge" id="modalLocationBadge">
+                            📍 <span id="modalLocationText">Block B Hostel</span>
+                        </div>
+                    </div>
+
+                    <!-- Rental Duration Controls -->
+                    <div class="rental-calculator-box">
+                        <div class="duration-row-header">
+                            <span class="section-micro-label">Rental Duration</span>
+                            <span class="price-hint" id="modalPriceHint">Price: ₹160 (for 3 days)</span>
+                        </div>
+
+                        <div class="duration-controls-row">
+                            <div class="custom-date-box">
+                                📅 Custom Date
+                            </div>
+                            <div class="days-select-box">
+                                <select id="rentalDaysSelect" onchange="updateModalRentalBreakdown()">
+                                    <option value="1">1 day</option>
+                                    <option value="2">2 days</option>
+                                    <option value="3" selected>3 days</option>
+                                    <option value="5">5 days</option>
+                                    <option value="7">7 days (1 week)</option>
+                                    <option value="14">14 days (2 weeks)</option>
+                                    <option value="30">30 days (1 month)</option>
+                                </select>
+                            </div>
+                            <label class="buy-out-option">
+                                <input type="radio" name="rentalOrBuy" id="radioBuyOut" onchange="updateModalRentalBreakdown()">
+                                <span>Buy Out</span>
+                            </label>
+                        </div>
+
+                        <!-- Price Breakdown Rows -->
+                        <div class="fee-breakdown-list">
+                            <div class="fee-row">
+                                <span class="fee-label">Daily Rental Rate:</span>
+                                <span class="fee-val" id="modalDailyRate">₹50/day</span>
+                            </div>
+                            <div class="fee-row">
+                                <span class="fee-label">Estimated Service Fee:</span>
+                                <span class="fee-val" id="modalServiceFee">₹10</span>
+                            </div>
+                        </div>
+
+                        <div class="final-price-banner">
+                            <div class="total-calc-display">
+                                Total: <b id="modalTotalSum">₹160</b> <span class="total-subtext" id="modalDurationSummary">(for 3 days)</span>
+                            </div>
+                            <div class="purchase-price-tag">
+                                Purchase Price: <b id="modalPurchasePrice">₹3,200</b>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Verified Student Seller Card -->
+                    <div class="verified-seller-badge-card">
+                        <div class="seller-avatar" id="modalSellerAvatar">
+                            👨‍🎓
+                        </div>
+                        <div class="seller-meta">
+                            <div class="verified-tag">✔ Verified Student</div>
+                            <div class="seller-name" id="modalSellerName">Siddharth R.</div>
+                            <div class="seller-dept" id="modalSellerDept">B.Tech, CSE • Fast Responder</div>
+                        </div>
+                    </div>
+
+                    <!-- Main Action Buttons -->
+                    <div class="modal-action-buttons">
+                        <button type="button" class="btn-request-primary" id="modalActionBtn" onclick="executeModalAction()">
+                            Request to Borrow / Buy
+                        </button>
+                        <button type="button" class="btn-chat-toggle" id="openChatBtn" onclick="toggleChatPanel()">
+                            💬 Chat with Seller
+                        </button>
+                    </div>
+
+                    <!-- Inline Chat Section Inside Modal -->
+                    <div id="chatPanel" class="chat-panel" style="display:none; margin-top: 16px;">
+                        <div class="chat-panel-header">
+                            <span>💬 Live Chat with Seller</span>
+                            <span id="chatTypingIndicator" class="chat-typing"></span>
+                        </div>
+                        <div id="chatMessages" class="chat-messages">
+                            <!-- Injected messages -->
+                        </div>
+                        <div class="chat-input-row">
+                            <input
+                                type="text"
+                                id="chatInput"
+                                class="chat-input"
+                                placeholder="Type a message or offer…"
+                                maxlength="500"
+                                onkeydown="handleChatKey(event)"
+                                oninput="emitTyping()"
+                            >
+                            <button class="chat-send-btn" onclick="sendChatMessage()">Send ➤</button>
+                        </div>
+                        <p id="chatAuthNote" style="display:none; color:#9ca3af; font-size:12px; text-align:center; margin:8px 0 0;">
+                            <a href="#" onclick="openAuthModal('login'); return false;" style="color:#4338ca; font-weight:600;">Log in</a> to chat with this student.
+                        </p>
+                    </div>
+
                 </div>
-                <div id="chatMessages" class="chat-messages">
-                    <!-- messages injected here -->
-                </div>
-                <div class="chat-input-row">
-                    <input
-                        type="text"
-                        id="chatInput"
-                        class="chat-input"
-                        placeholder="Type a message…"
-                        maxlength="500"
-                        onkeydown="handleChatKey(event)"
-                        oninput="emitTyping()"
-                    >
-                    <button class="chat-send-btn" onclick="sendChatMessage()">Send ➤</button>
-                </div>
-                <p id="chatAuthNote" style="display:none; color:#9ca3af; font-size:12px; text-align:center; margin:8px 0 0;">
-                    <a href="#" onclick="openAuthModal('login'); return false;" style="color:#ec4899; font-weight:600;">Log in</a> to chat with the seller.
-                </p>
             </div>
         </div>
     </div>
 
     <!-- Footer -->
-    <footer>
+    <footer class="modern-footer">
         <p>© 2026 DashDrop | Campus Marketplace</p>
     </footer>
 
-    <!-- Socket.IO client (served automatically by the backend) -->
+    <!-- Socket.IO client (served automatically by backend) -->
     <script src="/socket.io/socket.io.js"></script>
     <script src="script.js"></script>
 </body>

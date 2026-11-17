@@ -181,6 +181,24 @@ function initDatabase() {
     try {
         db.exec(`ALTER TABLE users ADD COLUMN is_blocked INTEGER DEFAULT 0;`);
     } catch (_) { /* Column already exists */ }
+    try {
+        db.exec(`ALTER TABLE items ADD COLUMN item_type TEXT DEFAULT 'sell';`);
+    } catch (_) { /* Column already exists */ }
+    try {
+        db.exec(`ALTER TABLE items ADD COLUMN rental_period TEXT DEFAULT 'month';`);
+    } catch (_) { /* Column already exists */ }
+    try {
+        db.exec(`ALTER TABLE items ADD COLUMN rental_price REAL;`);
+    } catch (_) { /* Column already exists */ }
+    try {
+        db.exec(`ALTER TABLE items ADD COLUMN rating REAL DEFAULT 4.8;`);
+    } catch (_) { /* Column already exists */ }
+    try {
+        db.exec(`ALTER TABLE items ADD COLUMN review_count INTEGER DEFAULT 12;`);
+    } catch (_) { /* Column already exists */ }
+    try {
+        db.exec(`ALTER TABLE items ADD COLUMN is_negotiable INTEGER DEFAULT 0;`);
+    } catch (_) { /* Column already exists */ }
 
     // 9. Campus Blocks Table (Hostel & Campus Locations Management)
     db.exec(`

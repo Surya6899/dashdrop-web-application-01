@@ -4,15 +4,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DashDrop - Sell</title>
+    <title>DashDrop - List an Item</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 
-<body>
+<body class="browse-page-body">
+
+    <!-- Ambient Glow Circles -->
+    <div class="ambient-glow glow-top-left"></div>
+    <div class="ambient-glow glow-top-right"></div>
+    <div class="ambient-glow glow-bottom-left"></div>
 
     <!-- Navigation Bar -->
-    <header class="navbar">
-        <div class="logo">DashDrop</div>
+    <header class="navbar navbar-floating">
+        <div class="logo">
+            <span class="logo-text">DashDrop</span>
+        </div>
 
         <nav>
             <a href="items.html">Items</a>
@@ -21,91 +31,193 @@
             <a href="account.html">Account Details</a>
         </nav>
 
-        <button class="login-btn" onclick="goToItems()">
-            Student Portal
+        <button class="login-btn" onclick="openAuthModal('login')">
+            Login
         </button>
     </header>
 
-    <!-- Sell Page -->
-    <main class="sell-page">
+    <!-- Main Container: Two-Column Form + Real-time Interactive Live Preview -->
+    <main class="sell-studio-container">
 
-        <section class="sell-header">
-            <h1>Sell Your Item</h1>
-            <p>
-                Have something you don't need anymore?
-                List it on DashDrop and connect with other students on campus.
-            </p>
-        </section>
+        <div class="sell-studio-header">
+            <h1 class="sell-studio-title">List an Item</h1>
+            <p class="sell-studio-subtitle">Create a new listing for your campus community.</p>
+        </div>
 
-        <!-- Sell Form -->
-        <section class="sell-form">
-            <h2>Create Your Listing</h2>
+        <div class="sell-studio-layout">
 
-            <form id="sellForm" onsubmit="event.preventDefault(); listItem();">
-                <!-- Item Name -->
-                <label for="itemName">Item Name *</label>
-                <input type="text" id="itemName" placeholder="Example: Engineering Graphics Drafter" required>
+            <!-- Left: Studio Form Card -->
+            <section class="sell-form-card">
+                <form id="sellForm" onsubmit="event.preventDefault(); listItem();">
 
-                <!-- Category -->
-                <label for="category">Category *</label>
-                <select id="category" required>
-                    <option value="">Select Category</option>
-                    <option value="electronics">Electronics</option>
-                    <option value="books">Books</option>
-                    <option value="furniture">Furniture</option>
-                    <option value="clothes">Clothes</option>
-                    <option value="others">Others</option>
-                </select>
+                    <!-- Title & Listing Type (Sell / Rent / Borrow) -->
+                    <div class="form-row-split">
+                        <div class="form-col-flex">
+                            <label for="itemName">Title</label>
+                            <input type="text" id="itemName" placeholder="Item Name / Title" oninput="updateLivePreview()" required>
+                        </div>
+                        <div class="form-col-fit">
+                            <label>Listing Type</label>
+                            <div class="segmented-pill-group" id="listingTypeGroup">
+                                <button type="button" class="segment-btn active" data-type="sell" onclick="setListingType('sell', this)">Sell</button>
+                                <button type="button" class="segment-btn" data-type="rent" onclick="setListingType('rent', this)">Rent</button>
+                                <button type="button" class="segment-btn" data-type="borrow" onclick="setListingType('borrow', this)">Borrow</button>
+                            </div>
+                        </div>
+                    </div>
 
-                <!-- Price -->
-                <label for="price">Price (₹) *</label>
-                <input type="number" id="price" placeholder="Example: 1500" min="0" required>
+                    <!-- Price & Category -->
+                    <div class="form-row-split">
+                        <div class="form-col-flex">
+                            <label for="price">Price (₹)</label>
+                            <div class="price-input-wrapper">
+                                <input type="number" id="price" placeholder="Price (₹)" min="0" oninput="updateLivePreview()" required>
+                                <label class="checkbox-label-inline">
+                                    <input type="checkbox" id="isNegotiable" onchange="updateLivePreview()">
+                                    <span>Negotiable</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="form-col-flex">
+                            <label for="category">Category</label>
+                            <select id="category" onchange="updateLivePreview()" required>
+                                <option value="electronics" selected>Electronics</option>
+                                <option value="books">Books</option>
+                                <option value="furniture">Furniture</option>
+                                <option value="clothes">Clothes</option>
+                                <option value="others">Others</option>
+                            </select>
+                        </div>
+                    </div>
 
-                <!-- Condition -->
-                <label for="condition">Condition *</label>
-                <select id="condition" required>
-                    <option value="">Select Condition</option>
-                    <option value="new">New</option>
-                    <option value="like-new">Like New</option>
-                    <option value="good">Good</option>
-                    <option value="fair">Fair</option>
-                </select>
+                    <!-- Campus Location / Block Chips Selector -->
+                    <div class="form-group-full">
+                        <label>Campus Location / Block</label>
+                        <div class="block-selector-row" id="sellBlockSelector">
+                            <button type="button" class="block-chip active" data-block="Block A" onclick="selectSellBlock('Block A', this)">🏢 Block A</button>
+                            <button type="button" class="block-chip" data-block="Block B" onclick="selectSellBlock('Block B', this)">🏢 Block B</button>
+                            <button type="button" class="block-chip" data-block="Block C" onclick="selectSellBlock('Block C', this)">🏢 Block C</button>
+                            <button type="button" class="block-chip" data-block="Block D" onclick="selectSellBlock('Block D', this)">🏢 Block D</button>
+                            <button type="button" class="block-chip" data-block="Academic / Library" onclick="selectSellBlock('Academic / Library', this)">🎓 Academic / Library</button>
+                            <button type="button" class="block-chip" data-block="Off-Campus" onclick="selectSellBlock('Off-Campus', this)">🏡 Off-Campus</button>
+                        </div>
+                        <input type="hidden" id="hostelBlock" value="Block A">
+                    </div>
 
-                <!-- Hostel / Campus Block -->
-                <label for="hostelBlock">Hostel / Campus Block *</label>
-                <select id="hostelBlock" required>
-                    <option value="">Select Pickup Location</option>
-                    <option value="Block A">🏢 Block A (Boys Hostel)</option>
-                    <option value="Block B">🏢 Block B (Boys Hostel)</option>
-                    <option value="Block C">🏢 Block C (Girls Hostel)</option>
-                    <option value="Block D">🏢 Block D (Girls Hostel)</option>
-                    <option value="Academic / Library">🎓 Main Academic / Library</option>
-                    <option value="Off-Campus">🏡 Off-Campus / Day Scholar</option>
-                </select>
+                    <!-- Condition Selector & Contact -->
+                    <div class="form-row-split">
+                        <div class="form-col-flex">
+                            <label for="condition">Condition</label>
+                            <select id="condition" onchange="updateLivePreview()" required>
+                                <option value="like-new" selected>Like New</option>
+                                <option value="new">Brand New</option>
+                                <option value="good">Good</option>
+                                <option value="fair">Fair</option>
+                            </select>
+                        </div>
+                        <div class="form-col-flex">
+                            <label for="contact">Contact Information *</label>
+                            <input type="text" id="contact" placeholder="Hostel room, WhatsApp, or college email" required>
+                        </div>
+                    </div>
 
-                <!-- Description -->
-                <label for="description">Description</label>
-                <textarea id="description" rows="4" placeholder="Briefly describe the item condition, semester used, or hostel pickup point..."></textarea>
+                    <!-- Description -->
+                    <div class="form-group-full">
+                        <label for="description">Description</label>
+                        <textarea id="description" rows="3" placeholder="Describe your item (condition, usage, etc.)" oninput="updateLivePreview()"></textarea>
+                    </div>
 
-                <!-- Contact -->
-                <label for="contact">Contact Information *</label>
-                <input type="text" id="contact" placeholder="Hostel room number, WhatsApp, or college email" required>
+                    <!-- Drag & Drop Photos Uploader Area -->
+                    <div class="form-group-full">
+                        <div class="dropzone-area" id="dropzoneBox" onclick="document.getElementById('photoInput').click()">
+                            <input type="file" id="photoInput" accept="image/*" style="display:none;" onchange="handleImageSelection(event)">
+                            
+                            <!-- Preset Thumbnail items in upload preview strip -->
+                            <div class="dropzone-thumbnails-strip" id="dropzoneThumbs" onclick="event.stopPropagation()">
+                                <div class="thumb-pill-item">
+                                    <button type="button" class="thumb-remove-btn" onclick="removeThumb(this)">Remove ✕</button>
+                                    <img src="https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=120&q=80" alt="bike">
+                                </div>
+                                <div class="thumb-pill-item">
+                                    <button type="button" class="thumb-remove-btn" onclick="removeThumb(this)">Remove ✕</button>
+                                    <img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=120&q=80" alt="headphones">
+                                </div>
+                                <div class="thumb-pill-item">
+                                    <button type="button" class="thumb-remove-btn" onclick="removeThumb(this)">Remove ✕</button>
+                                    <img src="https://images.unsplash.com/photo-1587145820266-a5951ee6f620?w=120&q=80" alt="calculator">
+                                </div>
+                            </div>
 
-                <!-- Submit Button -->
-                <button type="submit" class="sell-btn" id="submitBtn">
-                    List Item
-                </button>
+                            <div class="dropzone-prompt">
+                                <span class="dropzone-icon">⭡</span>
+                                <p class="dropzone-text">Drag & drop photos here, or browse</p>
+                                <span class="dropzone-hint">Supports JPG, PNG (Max 5MB)</span>
+                            </div>
+                        </div>
+                    </div>
 
-                <!-- Live Feedback Banner -->
-                <div id="formFeedback" class="form-feedback"></div>
-            </form>
+                    <!-- Submit Button -->
+                    <button type="submit" class="sell-submit-btn" id="submitBtn">
+                        Publish Listing
+                    </button>
 
-        </section>
+                    <!-- Feedback Banner -->
+                    <div id="formFeedback" class="form-feedback" style="display:none;"></div>
+
+                </form>
+            </section>
+
+            <!-- Right: Real-time Live Preview Card (Matches Image 4) -->
+            <aside class="sell-preview-sidebar">
+                <div class="preview-header-label">
+                    <h3>Live Preview</h3>
+                    <p>How students will see your listing</p>
+                </div>
+
+                <div class="live-preview-card" id="livePreviewCard">
+                    <div class="live-preview-img-box">
+                        <img id="previewImage" src="https://images.unsplash.com/photo-1580481077195-c3a821a5060f?w=600&q=80" alt="Preview item">
+                    </div>
+
+                    <div class="live-preview-content">
+                        <!-- For Sale / For Rent / For Borrow badge -->
+                        <span class="preview-type-badge badge-sale" id="previewTypeBadge">FOR SALE</span>
+
+                        <!-- Item Title -->
+                        <h4 class="preview-title" id="previewTitle">Ergonomic Study Chair</h4>
+
+                        <!-- Price & Condition Tag -->
+                        <div class="preview-price-row">
+                            <span class="preview-price-val" id="previewPriceVal">₹1,200</span>
+                            <span class="preview-condition-tag" id="previewConditionTag">Like New</span>
+                        </div>
+
+                        <!-- Location Pin -->
+                        <div class="preview-location-pin">
+                            📍 <span id="previewBlockVal">Block A</span>
+                        </div>
+
+                        <!-- CTA Teaser -->
+                        <div class="preview-cta-block">
+                            <div class="preview-chat-note">Interested? <b>Chat with Seller</b></div>
+                            <button type="button" class="preview-request-btn">Request</button>
+                        </div>
+
+                        <!-- Seller Info Micro -->
+                        <div class="preview-seller-footer">
+                            <span class="seller-dot-avatar">👤</span>
+                            <span id="previewSellerName">You (Surya)</span>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+        </div>
 
     </main>
 
     <!-- Footer -->
-    <footer>
+    <footer class="modern-footer">
         <p>© 2026 DashDrop | Campus Marketplace</p>
     </footer>
 

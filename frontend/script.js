@@ -608,43 +608,70 @@ async function renderItemsGrid(page = currentPage) {
 
         json.data.forEach(item => {
             const card = document.createElement('div');
-            card.className = 'item-card';
-            card.style.position = 'relative';
+            card.className = 'modern-item-card item-card';
             card.setAttribute('data-category', item.category || 'others');
 
+            const isRent = item.item_type === 'rent';
+            const priceTag = isRent ? `RENT` : `BUY`;
+            const priceVal = isRent 
+                ? `₹${item.rental_price || Math.round(item.price / 10)}/${item.rental_period || 'mo'}` 
+                : `₹${Number(item.price).toLocaleString('en-IN')}`;
+            const ratingVal = item.rating || 4.8;
+            const blockName = item.hostel_block || 'Block A';
+            const imageUrl = item.file_url || null;
             const icon = item.icon || categoryIcons[item.category] || '📦';
-            const formattedPrice = '₹' + Number(item.price).toLocaleString('en-IN');
 
             const isOwner = currentUser && item.owner_id === currentUser.id;
             const isAdmin = currentUser && currentUser.role === 'admin';
             const isSaved = userWishlistIds.includes(item.id);
 
             card.innerHTML = `
+                <!-- Top Badge: BUY / RENT -->
+                <div class="card-badge-top-right ${isRent ? 'badge-rent' : 'badge-buy'}">
+                    ${priceTag}
+                    <span class="card-badge-price-sub">${priceVal}</span>
+                </div>
+
                 <!-- Wishlist Heart Button -->
-                <button type="button" class="wishlist-heart-btn ${isSaved ? 'active' : ''}" 
+                <button type="button" class="card-heart-btn ${isSaved ? 'active' : ''}" 
                     title="${isSaved ? 'Saved in Wishlist' : 'Save to Wishlist'}" 
                     onclick="toggleWishlist(${item.id}, event)">
                     ${isSaved ? '❤️' : '🤍'}
                 </button>
 
-                <div class="item-image">${icon}</div>
-                <div class="item-info">
-                    <div style="display:flex; justify-content:space-between; align-items:center; gap:4px; margin-bottom:4px;">
-                        <span class="item-block-badge">📍 ${escapeHtml(item.hostel_block || 'Main Campus')}</span>
+                <!-- Thumbnail -->
+                <div class="modern-card-thumb-wrap">
+                    ${imageUrl 
+                        ? `<img src="${imageUrl}" alt="${escapeHtml(item.name)}" onerror="this.onerror=null; this.parentElement.innerHTML='<span class=\\'card-emoji-placeholder\\'>${icon}</span>';">` 
+                        : `<span class="card-emoji-placeholder">${icon}</span>`
+                    }
+                </div>
+
+                <!-- Card Body -->
+                <div class="modern-card-body">
+                    <div class="card-title-row">
+                        <h4 class="card-item-title" title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</h4>
                     </div>
-                    <h2>${escapeHtml(item.name)}</h2>
-                    <p>${escapeHtml(item.description || 'No description provided.')}</p>
-                    <div class="item-bottom">
-                        <span class="price">${formattedPrice}</span>
+
+                    <div class="card-meta-line">
+                        <span class="card-block-loc">🏢 ${escapeHtml(blockName)}</span>
+                        <span class="card-rating-gold">★ ${ratingVal}</span>
+                    </div>
+
+                    <div class="card-price-footer">
+                        <span class="card-price-primary">${isRent ? priceVal : '₹' + Number(item.price).toLocaleString('en-IN')}</span>
                         <div style="display:flex; gap:6px;">
-                            <button type="button" class="view-btn">View</button>
-                            ${(isOwner || isAdmin) ? `<button type="button" class="delete-btn" style="background:#fee2e2; color:#dc2626; border:none; padding:6px 12px; border-radius:16px; cursor:pointer; font-weight:600; font-size:12px;" title="${isAdmin ? 'Admin Delete' : 'Owner Delete'}">🗑️</button>` : ''}
+                            <button type="button" class="card-action-view-btn view-btn">View</button>
+                            ${(isOwner || isAdmin) ? `<button type="button" class="delete-btn" style="background:#fee2e2; color:#dc2626; border:none; padding:4px 10px; border-radius:14px; cursor:pointer; font-weight:600; font-size:11px;" title="${isAdmin ? 'Admin Delete' : 'Owner Delete'}">🗑️</button>` : ''}
                         </div>
                     </div>
                 </div>
             `;
 
-            card.querySelector('.view-btn').addEventListener('click', () => openItemModal(item));
+            card.addEventListener('click', (e) => {
+                if (e.target.closest('.card-heart-btn') || e.target.closest('.delete-btn')) return;
+                openItemModal(item);
+            });
 
             const delBtn = card.querySelector('.delete-btn');
             if (delBtn) {
@@ -785,25 +812,139 @@ function openItemModal(item) {
     const modal = document.getElementById('itemModal');
     if (!modal) return;
 
-    const modalIcon     = document.getElementById('modalIcon');
-    const modalTitle    = document.getElementById('modalTitle');
-    const modalCategory = document.getElementById('modalCategory');
-    const modalDesc     = document.getElementById('modalDesc');
-    const modalPrice    = document.getElementById('modalPrice');
+    // Check if modern product modal elements exist
+    const modalProductImage = document.getElementById('modalProductImage');
+    const modalConditionTag = document.getElementById('modalConditionTag');
+    const modalRatingVal    = document.getElementById('modalRatingVal');
+    const modalReviewsVal   = document.getElementById('modalReviewsVal');
+    const modalLocationText = document.getElementById('modalLocationText');
+    const modalTitle        = document.getElementById('modalTitle');
+    const modalDesc         = document.getElementById('modalDesc');
+    const modalSellerName   = document.getElementById('modalSellerName');
+    const galleryThumbs     = document.getElementById('galleryThumbs');
 
-    if (modalIcon)     modalIcon.textContent = item.icon || categoryIcons[item.category] || '📦';
-    if (modalTitle)    modalTitle.textContent = item.name;
-    if (modalCategory) modalCategory.textContent = (item.category || 'Item') + (item.condition ? ` • ${item.condition} condition` : '');
-    if (modalDesc) {
-        let desc = item.description || 'No description provided.';
-        if (item.hostel_block) desc += `\n\n🏢 Campus Location: ${item.hostel_block}`;
-        if (item.contact) desc += `\n📍 Pickup / Contact: ${item.contact}`;
-        if (item.owner_name) desc += `\n👤 Listed by: ${item.owner_name}`;
-        modalDesc.innerText = desc;
+    if (modalTitle) modalTitle.textContent = item.name;
+    if (modalDesc)  modalDesc.textContent  = item.description || 'Verified campus listing available for immediate handover.';
+    if (modalConditionTag) modalConditionTag.textContent = (item.condition || 'Good').replace('-', ' ').toUpperCase();
+    if (modalRatingVal)    modalRatingVal.textContent    = item.rating || 4.8;
+    if (modalReviewsVal)   modalReviewsVal.textContent   = item.review_count || 12;
+    if (modalLocationText) modalLocationText.textContent = item.hostel_block || 'Block B Hostel';
+    if (modalSellerName)   modalSellerName.textContent   = item.owner_name || 'Siddharth R.';
+
+    const imgUrl = item.file_url || 'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=600&q=80';
+    if (modalProductImage) {
+        modalProductImage.src = imgUrl;
     }
-    if (modalPrice) modalPrice.textContent = '₹' + Number(item.price).toLocaleString('en-IN');
+
+    // Set up thumbnails
+    if (galleryThumbs) {
+        galleryThumbs.innerHTML = `
+            <div class="gallery-thumb-item active" onclick="switchGalleryImg('${imgUrl}', this)">
+                <img src="${imgUrl}" alt="Thumb 1">
+            </div>
+            <div class="gallery-thumb-item" onclick="switchGalleryImg('https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&q=80', this)">
+                <img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=120&q=80" alt="Thumb 2">
+            </div>
+            <div class="gallery-thumb-item" onclick="switchGalleryImg('https://images.unsplash.com/photo-1580481077195-c3a821a5060f?w=600&q=80', this)">
+                <img src="https://images.unsplash.com/photo-1580481077195-c3a821a5060f?w=120&q=80" alt="Thumb 3">
+            </div>
+            <div class="gallery-thumb-item" onclick="switchGalleryImg('https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600&q=80', this)">
+                <img src="https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=120&q=80" alt="Thumb 4">
+            </div>
+        `;
+    }
+
+    // Recalculate duration & pricing breakdown
+    updateModalRentalBreakdown();
 
     modal.classList.add('active');
+}
+
+function switchGalleryImg(url, el) {
+    const mainImg = document.getElementById('modalProductImage');
+    if (mainImg) mainImg.src = url;
+    document.querySelectorAll('.gallery-thumb-item').forEach(t => t.classList.remove('active'));
+    if (el) el.classList.add('active');
+}
+
+function updateModalRentalBreakdown() {
+    if (!currentActiveItem) return;
+    const radioBuy = document.getElementById('radioBuyOut');
+    const isBuyOut = radioBuy && radioBuy.checked;
+
+    const daysSelect = document.getElementById('rentalDaysSelect');
+    const days = daysSelect ? parseInt(daysSelect.value) : 3;
+
+    const dailyRate = currentActiveItem.rental_price || Math.max(10, Math.round(currentActiveItem.price / 30));
+    const serviceFee = 10;
+    const purchasePrice = currentActiveItem.price;
+
+    const modalDailyRate     = document.getElementById('modalDailyRate');
+    const modalServiceFee    = document.getElementById('modalServiceFee');
+    const modalTotalSum      = document.getElementById('modalTotalSum');
+    const modalPriceHint     = document.getElementById('modalPriceHint');
+    const modalDurationSummary = document.getElementById('modalDurationSummary');
+    const modalPurchasePrice = document.getElementById('modalPurchasePrice');
+    const modalActionBtn     = document.getElementById('modalActionBtn');
+
+    if (modalDailyRate)     modalDailyRate.textContent     = `₹${dailyRate}/day`;
+    if (modalServiceFee)    modalServiceFee.textContent    = `₹${serviceFee}`;
+    if (modalPurchasePrice) modalPurchasePrice.textContent = `₹${Number(purchasePrice).toLocaleString('en-IN')}`;
+
+    if (isBuyOut) {
+        if (modalTotalSum) modalTotalSum.textContent = `₹${Number(purchasePrice).toLocaleString('en-IN')}`;
+        if (modalDurationSummary) modalDurationSummary.textContent = `(Outright Purchase)`;
+        if (modalPriceHint) modalPriceHint.textContent = `Buy Out: ₹${purchasePrice}`;
+        if (modalActionBtn) modalActionBtn.textContent = `Buy Now (₹${purchasePrice})`;
+    } else {
+        const totalRent = (dailyRate * days) + serviceFee;
+        if (modalTotalSum) modalTotalSum.textContent = `₹${totalRent}`;
+        if (modalDurationSummary) modalDurationSummary.textContent = `(for ${days} day${days > 1 ? 's' : ''})`;
+        if (modalPriceHint) modalPriceHint.textContent = `Price: ₹${totalRent} (for ${days} days)`;
+        if (modalActionBtn) modalActionBtn.textContent = `Request to Borrow (${days} Days)`;
+    }
+}
+
+async function executeModalAction() {
+    const radioBuy = document.getElementById('radioBuyOut');
+    const isBuyOut = radioBuy && radioBuy.checked;
+    if (isBuyOut) {
+        await buyCurrentItem();
+    } else {
+        const daysSelect = document.getElementById('rentalDaysSelect');
+        const days = daysSelect ? parseInt(daysSelect.value) : 3;
+        const dailyRate = currentActiveItem ? (currentActiveItem.rental_price || Math.round(currentActiveItem.price / 30)) : 50;
+        
+        const user = getCurrentUser();
+        if (!user) {
+            alert('Please login to place a rental request.');
+            openAuthModal('login');
+            return;
+        }
+
+        try {
+            const res = await fetch(`${API}/rentals`, {
+                method: 'POST',
+                headers: getAuthHeaders(true),
+                body: JSON.stringify({
+                    item_name: currentActiveItem.name,
+                    category: currentActiveItem.category || 'general',
+                    daily_price: dailyRate,
+                    days: days,
+                    student_name: user.name
+                })
+            });
+            const json = await res.json();
+            if (json.success) {
+                alert(`🎉 Rental Confirmed!\n\n${json.message}\nTotal: ₹${json.rental.total_price}\nPickup at campus desk!`);
+                closeModal();
+            } else {
+                alert('⚠️ Rental failed: ' + (json.error || 'Unknown error'));
+            }
+        } catch (err) {
+            alert('⚠️ Could not connect to server.');
+        }
+    }
 }
 
 function closeModal() {
@@ -1149,6 +1290,9 @@ async function listItem() {
     const hostel_block = document.getElementById('hostelBlock')?.value || 'Block A';
     const description = document.getElementById('description')?.value.trim();
     const contact     = document.getElementById('contact')?.value.trim();
+    const isNegotiable = document.getElementById('isNegotiable')?.checked ? 1 : 0;
+    const item_type   = currentSellType || 'sell';
+    const file_url    = currentUploadedImgUrl || null;
 
     if (!name || !category || isNaN(price) || price < 0 || !condition || !contact) {
         showFormFeedback('formFeedback', '⚠️ Please fill in all required fields (Name, Category, Price, Condition, and Contact).', 'error');
@@ -1159,7 +1303,18 @@ async function listItem() {
         const res = await fetch(`${API}/items`, {
             method: 'POST',
             headers: getAuthHeaders(true),
-            body: JSON.stringify({ name, category, price, condition, description, contact, hostel_block })
+            body: JSON.stringify({ 
+                name, 
+                category, 
+                price, 
+                condition, 
+                description, 
+                contact, 
+                hostel_block,
+                item_type,
+                file_url,
+                is_negotiable: isNegotiable
+            })
         });
 
         const json = await res.json();
@@ -1179,10 +1334,12 @@ async function listItem() {
 }
 
 // -------------------------------------------------------
-// RENT PAGE (rent.html)
+// RENT PAGE (rent.html) & MODERN RENTAL BOOKING MODAL
 // -------------------------------------------------------
 
 let rentCategory = 'all';
+let currentRentalTarget = null;
+let currentRentalSelectedDays = 3;
 
 function filterRentCategory(category, buttonEl) {
     rentCategory = category;
@@ -1218,7 +1375,76 @@ if (rentSearchInput) {
     });
 }
 
-async function rentItem(itemName, dailyPrice, category) {
+function ensureRentalModalDOM() {
+    if (document.getElementById('rentalBookingModal')) return;
+
+    const modalHTML = `
+        <div class="modal-overlay" id="rentalBookingModal">
+            <div class="modal-card rental-booking-card">
+                <button class="modal-close" onclick="closeRentalModal()">&times;</button>
+                
+                <div class="rental-booking-header">
+                    <div class="rental-booking-icon-box" id="rentalModalIcon">📦</div>
+                    <div>
+                        <h3 class="rental-booking-title" id="rentalModalTitle">Rent Item</h3>
+                        <p class="rental-booking-subtitle" id="rentalModalSub">Campus peer-to-peer rental</p>
+                    </div>
+                </div>
+
+                <div class="rental-duration-selector-wrap">
+                    <label class="rental-label-bold">Select Rental Duration</label>
+                    <div class="duration-chips-grid">
+                        <button type="button" class="duration-chip-btn" data-days="1" onclick="selectRentalDuration(1, this)">1 Day</button>
+                        <button type="button" class="duration-chip-btn active" data-days="3" onclick="selectRentalDuration(3, this)">3 Days</button>
+                        <button type="button" class="duration-chip-btn" data-days="7" onclick="selectRentalDuration(7, this)">1 Week</button>
+                        <button type="button" class="duration-chip-btn" data-days="14" onclick="selectRentalDuration(14, this)">2 Weeks</button>
+                    </div>
+
+                    <div class="custom-days-row">
+                        <span>Or enter custom number of days:</span>
+                        <input type="number" id="customDaysInput" min="1" max="120" value="3" oninput="handleCustomDaysInput(this)">
+                    </div>
+                </div>
+
+                <!-- Price Quote Summary -->
+                <div class="rental-quote-box">
+                    <div class="quote-row">
+                        <span>Daily Rental Rate:</span>
+                        <b id="rentalQuoteDaily">₹0 / day</b>
+                    </div>
+                    <div class="quote-row">
+                        <span>Duration:</span>
+                        <span id="rentalQuoteDays">3 days</span>
+                    </div>
+                    <div class="quote-row">
+                        <span>Campus Service Fee:</span>
+                        <span>₹10</span>
+                    </div>
+                    <div class="quote-row-total">
+                        <span class="quote-total-title">Total Due at Handover:</span>
+                        <span class="quote-total-val" id="rentalQuoteTotal">₹0</span>
+                    </div>
+                </div>
+
+                <div class="rental-booking-actions">
+                    <button type="button" class="rental-cancel-btn" onclick="closeRentalModal()">Cancel</button>
+                    <button type="button" class="rental-confirm-submit-btn" id="rentalConfirmBtn" onclick="submitRentalBooking()">
+                        Confirm Rental →
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+    const modalEl = document.getElementById('rentalBookingModal');
+    modalEl.addEventListener('click', (e) => {
+        if (e.target === modalEl) closeRentalModal();
+    });
+}
+
+function openRentalModal(itemName, dailyPrice, category, icon = '📦') {
     const user = getCurrentUser();
     if (!user) {
         alert('Please login to place a rental request.');
@@ -1226,30 +1452,120 @@ async function rentItem(itemName, dailyPrice, category) {
         return;
     }
 
-    const days = prompt(`How many days do you want to rent "${itemName}"?`, '1');
-    if (!days || isNaN(days) || parseInt(days) <= 0) return;
+    ensureRentalModalDOM();
+    currentRentalTarget = { itemName, dailyPrice, category, icon };
+    currentRentalSelectedDays = 3;
+
+    const titleEl = document.getElementById('rentalModalTitle');
+    const subEl   = document.getElementById('rentalModalSub');
+    const iconEl  = document.getElementById('rentalModalIcon');
+    const customIn = document.getElementById('customDaysInput');
+
+    if (titleEl) titleEl.textContent = itemName;
+    if (subEl)   subEl.textContent   = `Rate: ₹${dailyPrice} / day • Category: ${category}`;
+    if (iconEl)  iconEl.textContent  = icon;
+    if (customIn) customIn.value     = 3;
+
+    // Reset chips to 3 days
+    document.querySelectorAll('#rentalBookingModal .duration-chip-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.days === '3');
+    });
+
+    updateRentalModalCalculations();
+
+    const modalEl = document.getElementById('rentalBookingModal');
+    if (modalEl) modalEl.classList.add('active');
+}
+
+function closeRentalModal() {
+    const modalEl = document.getElementById('rentalBookingModal');
+    if (modalEl) modalEl.classList.remove('active');
+}
+
+function selectRentalDuration(days, btnEl) {
+    currentRentalSelectedDays = parseInt(days, 10);
+    const customIn = document.getElementById('customDaysInput');
+    if (customIn) customIn.value = days;
+
+    document.querySelectorAll('#rentalBookingModal .duration-chip-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    if (btnEl) btnEl.classList.add('active');
+
+    updateRentalModalCalculations();
+}
+
+function handleCustomDaysInput(inputEl) {
+    const val = parseInt(inputEl.value, 10);
+    if (!isNaN(val) && val > 0) {
+        currentRentalSelectedDays = val;
+        document.querySelectorAll('#rentalBookingModal .duration-chip-btn').forEach(btn => {
+            btn.classList.toggle('active', parseInt(btn.dataset.days, 10) === val);
+        });
+        updateRentalModalCalculations();
+    }
+}
+
+function updateRentalModalCalculations() {
+    if (!currentRentalTarget) return;
+
+    const days = currentRentalSelectedDays || 1;
+    const dailyPrice = currentRentalTarget.dailyPrice;
+    const serviceFee = 10;
+    const total = (dailyPrice * days) + serviceFee;
+
+    const dailyEl = document.getElementById('rentalQuoteDaily');
+    const daysEl  = document.getElementById('rentalQuoteDays');
+    const totalEl = document.getElementById('rentalQuoteTotal');
+
+    if (dailyEl) dailyEl.textContent = `₹${dailyPrice} / day`;
+    if (daysEl)  daysEl.textContent  = `${days} day${days > 1 ? 's' : ''}`;
+    if (totalEl) totalEl.textContent = `₹${total}`;
+}
+
+async function submitRentalBooking() {
+    const user = getCurrentUser();
+    if (!user || !currentRentalTarget) return;
+
+    const btn = document.getElementById('rentalConfirmBtn');
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Processing...';
+    }
 
     try {
         const res = await fetch(`${API}/rentals`, {
             method: 'POST',
             headers: getAuthHeaders(true),
             body: JSON.stringify({
-                item_name: itemName,
-                category: category || 'general',
-                daily_price: dailyPrice,
-                days: parseInt(days),
+                item_name: currentRentalTarget.itemName,
+                category: currentRentalTarget.category || 'general',
+                daily_price: currentRentalTarget.dailyPrice,
+                days: currentRentalSelectedDays,
                 student_name: user.name
             })
         });
         const json = await res.json();
+        closeRentalModal();
+
         if (json.success) {
-            alert(`✅ Rental Confirmed!\n\n${json.message}\n\nPick up at the campus pickup desk!`);
+            alert(`🎉 Rental Confirmed!\n\n${json.message}\nTotal Due: ₹${json.rental.total_price}\nPickup at the campus pickup desk!`);
         } else {
             alert('⚠️ Rental failed: ' + (json.error || 'Unknown error'));
         }
     } catch (err) {
         alert('⚠️ Could not connect to server.');
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.textContent = 'Confirm Rental →';
+        }
     }
+}
+
+// Keep backward-compatible signature: if called directly from anywhere, opens the beautiful modal!
+async function rentItem(itemName, dailyPrice, category, icon = '📦') {
+    openRentalModal(itemName, dailyPrice, category, icon);
 }
 
 // -------------------------------------------------------
@@ -2493,5 +2809,243 @@ async function sendAIMessage(userText) {
     } finally {
         isAITyping = false;
         if (sendBtn) sendBtn.disabled = false;
+    }
+}
+
+
+// ==========================================================================
+// LANDING PAGE & SELL STUDIO INTERACTIVE HANDLERS (IMAGES 1, 2, 3 & 4)
+// ==========================================================================
+
+let currentLandingCategory = 'all';
+let currentLandingBlock = 'all';
+let currentSellType = 'sell';
+let currentUploadedImgUrl = 'https://images.unsplash.com/photo-1580481077195-c3a821a5060f?w=600&q=80';
+
+// Initialize Landing Page Content on DOM load if recentlyAddedGrid is present
+document.addEventListener('DOMContentLoaded', () => {
+    if (document.getElementById('recentlyAddedGrid')) {
+        renderLandingRecentlyAdded();
+    }
+    if (document.getElementById('livePreviewCard')) {
+        updateLivePreview();
+    }
+});
+
+async function renderLandingRecentlyAdded() {
+    const grid = document.getElementById('recentlyAddedGrid');
+    if (!grid) return;
+    grid.innerHTML = '<p style="grid-column: 1/-1; text-align:center; padding: 2rem; color: #64748b;">Loading campus listings...</p>';
+
+    try {
+        const params = new URLSearchParams();
+        if (currentLandingCategory !== 'all') params.set('category', currentLandingCategory);
+        if (currentLandingBlock !== 'all') params.set('hostel_block', currentLandingBlock);
+        const searchInput = document.getElementById('landingSearchInput');
+        if (searchInput && searchInput.value.trim()) params.set('search', searchInput.value.trim());
+        params.set('limit', 8);
+
+        const res = await fetch(`${API}/items?${params}`);
+        const json = await res.json();
+
+        grid.innerHTML = '';
+        if (!json.success || !json.data || json.data.length === 0) {
+            grid.innerHTML = `
+                <div style="grid-column: 1/-1; text-align:center; padding: 2.5rem; background:#fff; border-radius:20px; border:1px solid #e2e8f0;">
+                    <h4 style="font-size:18px; font-weight:700; margin-bottom:6px;">🔍 No items found</h4>
+                    <p style="color:#64748b; font-size:14px;">Try a different block or category filter.</p>
+                </div>
+            `;
+            return;
+        }
+
+        const currentUser = getCurrentUser();
+
+        json.data.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'modern-item-card';
+
+            const isRent = item.item_type === 'rent';
+            const priceTag = isRent ? 'RENT' : 'BUY';
+            const priceVal = isRent 
+                ? `₹${item.rental_price || Math.round(item.price / 10)}/${item.rental_period || 'mo'}` 
+                : `₹${Number(item.price).toLocaleString('en-IN')}`;
+            const ratingVal = item.rating || 4.8;
+            const blockName = item.hostel_block || 'Block A';
+            const imageUrl = item.file_url || null;
+            const icon = item.icon || categoryIcons[item.category] || '📦';
+
+            card.innerHTML = `
+                <div class="card-badge-top-right ${isRent ? 'badge-rent' : 'badge-buy'}">
+                    ${priceTag}
+                    <span class="card-badge-price-sub">${priceVal}</span>
+                </div>
+
+                <button type="button" class="card-heart-btn" onclick="toggleWishlist(${item.id}, event)">
+                    🤍
+                </button>
+
+                <div class="modern-card-thumb-wrap">
+                    ${imageUrl 
+                        ? `<img src="${imageUrl}" alt="${escapeHtml(item.name)}" onerror="this.onerror=null; this.parentElement.innerHTML='<span class=\\'card-emoji-placeholder\\'>${icon}</span>';">` 
+                        : `<span class="card-emoji-placeholder">${icon}</span>`
+                    }
+                </div>
+
+                <div class="modern-card-body">
+                    <div class="card-title-row">
+                        <h4 class="card-item-title">${escapeHtml(item.name)}</h4>
+                    </div>
+
+                    <div class="card-meta-line">
+                        <span class="card-block-loc">🏢 ${escapeHtml(blockName)}</span>
+                        <span class="card-rating-gold">★ ${ratingVal}</span>
+                    </div>
+
+                    <div class="card-price-footer">
+                        <span class="card-price-primary">${isRent ? priceVal : '₹' + Number(item.price).toLocaleString('en-IN')}</span>
+                        <button type="button" class="card-action-view-btn">View Details</button>
+                    </div>
+                </div>
+            `;
+
+            card.addEventListener('click', (e) => {
+                if (e.target.closest('.card-heart-btn')) return;
+                // Navigate to items.html and open modal, or open item details
+                window.location.href = `items.html?item_id=${item.id}`;
+            });
+
+            grid.appendChild(card);
+        });
+
+    } catch (err) {
+        console.error('Failed to load landing items:', err);
+    }
+}
+
+function handleLandingSearch() {
+    renderLandingRecentlyAdded();
+}
+
+const landingSearchInputEl = document.getElementById('landingSearchInput');
+if (landingSearchInputEl) {
+    landingSearchInputEl.addEventListener('input', () => renderLandingRecentlyAdded());
+    landingSearchInputEl.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            renderLandingRecentlyAdded();
+        }
+    });
+}
+
+function switchLandingCategory(cat, btnEl) {
+    currentLandingCategory = cat;
+    const row = document.getElementById('landingCategoryRow');
+    if (row) {
+        row.querySelectorAll('.cat-pill').forEach(b => b.classList.remove('active'));
+        if (btnEl) btnEl.classList.add('active');
+    }
+    renderLandingRecentlyAdded();
+}
+
+function switchLandingBlock(blk, btnEl) {
+    currentLandingBlock = blk;
+    const row = document.getElementById('landingLocationRow');
+    if (row) {
+        row.querySelectorAll('.loc-chip').forEach(b => b.classList.remove('active'));
+        if (btnEl) btnEl.classList.add('active');
+    }
+    renderLandingRecentlyAdded();
+}
+
+// -------------------------------------------------------------
+// SELL STUDIO INTERACTIVE LOGIC (Sell / Rent / Borrow + Live Preview)
+// -------------------------------------------------------------
+
+function setListingType(type, btnEl) {
+    currentSellType = type;
+    const group = document.getElementById('listingTypeGroup');
+    if (group) {
+        group.querySelectorAll('.segment-btn').forEach(b => b.classList.remove('active'));
+        if (btnEl) btnEl.classList.add('active');
+    }
+    updateLivePreview();
+}
+
+function selectSellBlock(blockName, btnEl) {
+    const hidden = document.getElementById('hostelBlock');
+    if (hidden) hidden.value = blockName;
+
+    const row = document.getElementById('sellBlockSelector');
+    if (row) {
+        row.querySelectorAll('.block-chip').forEach(b => b.classList.remove('active'));
+        if (btnEl) btnEl.classList.add('active');
+    }
+    updateLivePreview();
+}
+
+function removeThumb(btn) {
+    const thumbItem = btn.closest('.thumb-pill-item');
+    if (thumbItem) thumbItem.remove();
+}
+
+function handleImageSelection(e) {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+        currentUploadedImgUrl = event.target.result;
+        const previewImg = document.getElementById('previewImage');
+        if (previewImg) previewImg.src = currentUploadedImgUrl;
+
+        // Add thumbnail to strip
+        const strip = document.getElementById('dropzoneThumbs');
+        if (strip) {
+            const thumb = document.createElement('div');
+            thumb.className = 'thumb-pill-item';
+            thumb.innerHTML = `
+                <button type="button" class="thumb-remove-btn" onclick="removeThumb(this)">Remove ✕</button>
+                <img src="${currentUploadedImgUrl}" alt="upload">
+            `;
+            strip.prepend(thumb);
+        }
+    };
+    reader.readAsDataURL(file);
+}
+
+function updateLivePreview() {
+    const titleVal = document.getElementById('itemName')?.value.trim() || 'Ergonomic Study Chair';
+    const priceVal = parseFloat(document.getElementById('price')?.value);
+    const condVal  = document.getElementById('condition')?.value || 'Like New';
+    const blockVal = document.getElementById('hostelBlock')?.value || 'Block A';
+    const isNego   = document.getElementById('isNegotiable')?.checked;
+
+    const previewTitle       = document.getElementById('previewTitle');
+    const previewPriceVal     = document.getElementById('previewPriceVal');
+    const previewConditionTag = document.getElementById('previewConditionTag');
+    const previewBlockVal     = document.getElementById('previewBlockVal');
+    const previewTypeBadge    = document.getElementById('previewTypeBadge');
+
+    if (previewTitle) previewTitle.textContent = titleVal;
+    if (previewConditionTag) previewConditionTag.textContent = condVal.replace('-', ' ').toUpperCase();
+    if (previewBlockVal) previewBlockVal.textContent = blockVal;
+
+    const formattedPrice = isNaN(priceVal) ? '₹1,200' : '₹' + Number(priceVal).toLocaleString('en-IN');
+    if (previewPriceVal) {
+        previewPriceVal.textContent = formattedPrice + (isNego ? ' (Nego)' : '');
+    }
+
+    if (previewTypeBadge) {
+        if (currentSellType === 'rent') {
+            previewTypeBadge.textContent = 'FOR RENT';
+            previewTypeBadge.className = 'preview-type-badge badge-rent';
+        } else if (currentSellType === 'borrow') {
+            previewTypeBadge.textContent = 'FOR BORROW';
+            previewTypeBadge.className = 'preview-type-badge badge-borrow';
+        } else {
+            previewTypeBadge.textContent = 'FOR SALE';
+            previewTypeBadge.className = 'preview-type-badge badge-sale';
+        }
     }
 }

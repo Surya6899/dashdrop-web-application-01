@@ -388,7 +388,20 @@ app.get('/api/items/:id', (req, res) => {
 // 7. POST create a new listing (Student or Admin)
 app.post('/api/items', optionalAuth, (req, res) => {
     try {
-        const { name, category, price, condition, description, contact, hostel_block } = req.body;
+        const {
+            name,
+            category,
+            price,
+            condition,
+            description,
+            contact,
+            hostel_block,
+            item_type,
+            rental_period,
+            rental_price,
+            file_url,
+            is_negotiable
+        } = req.body;
 
         if (!name || !category || price === undefined || price === null || !condition || !contact) {
             return res.status(400).json({
@@ -421,13 +434,18 @@ app.post('/api/items', optionalAuth, (req, res) => {
             }
         }
         const block = hostel_block && hostel_block.trim() !== '' ? hostel_block.trim() : 'Block A';
+        const finalType = item_type && ['sell', 'rent', 'borrow'].includes(item_type.toLowerCase()) ? item_type.toLowerCase() : 'sell';
+        const finalPeriod = rental_period || 'month';
+        const finalRentalPrice = rental_price ? parseFloat(rental_price) : null;
+        const finalImg = file_url || null;
+        const finalNegotiable = is_negotiable ? 1 : 0;
 
         const stmt = db.prepare(`
-            INSERT INTO items (owner_id, name, category, price, condition, description, contact, icon, hostel_block)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO items (owner_id, name, category, price, condition, description, contact, icon, hostel_block, item_type, rental_period, rental_price, file_url, is_negotiable)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `);
 
-        stmt.run(ownerId, name.trim(), category.toLowerCase().trim(), numPrice, condition, finalDesc, contact.trim(), icon, block);
+        stmt.run(ownerId, name.trim(), category.toLowerCase().trim(), numPrice, condition, finalDesc, contact.trim(), icon, block, finalType, finalPeriod, finalRentalPrice, finalImg, finalNegotiable);
 
         const lastItemStmt = db.prepare('SELECT * FROM items ORDER BY id DESC LIMIT 1');
         const createdItem = lastItemStmt.get();
