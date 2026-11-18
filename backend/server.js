@@ -14,6 +14,33 @@ const { db, initDatabase, hashPassword, verifyPassword } = require('./database.j
 
 const app = express();
 const httpServer = http.createServer(app);
+
+// Allow requests from Vercel frontend and local development
+const allowedOrigins = [
+    'http://localhost:5000',
+    'http://localhost:5500',
+    'http://127.0.0.1:5500',
+    // Add your Vercel URL here after first deployment:
+    // 'https://dashdrop-campus-marketplace.vercel.app',
+    // pattern match all vercel preview URLs:
+    /https:\/\/dashdrop.*\.vercel\.app$/,
+    /https:\/\/.*\.vercel\.app$/
+];
+
+const corsOptions = {
+    origin: (origin, callback) => {
+        // Allow requests with no origin (mobile apps, curl, Postman)
+        if (!origin) return callback(null, true);
+        const allowed = allowedOrigins.some(o =>
+            typeof o === 'string' ? o === origin : o.test(origin)
+        );
+        callback(allowed ? null : new Error('Not allowed by CORS'), allowed);
+    },
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true
+};
+
 const io = new SocketIOServer(httpServer, {
     cors: { origin: '*', methods: ['GET', 'POST'] }
 });
@@ -23,7 +50,8 @@ const PORT = process.env.PORT || 5000;
 initDatabase();
 
 // Middleware
-app.use(cors());
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions)); // pre-flight
 app.use(express.json());
 
 // Serve Frontend Static Files (HTML, CSS, JS) directly from Express

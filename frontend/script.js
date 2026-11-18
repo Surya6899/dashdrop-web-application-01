@@ -7,10 +7,18 @@
 // -------------------------------------------------------
 // CONFIG & AUTH STATE
 // -------------------------------------------------------
-// Auto-detect production host or fallback to localhost
-const API = (window.location.protocol.startsWith('http') && window.location.port !== '5500')
-    ? `${window.location.origin}/api`
-    : 'http://localhost:5000/api';
+// Auto-detect production vs local environment
+// In production (Vercel), BACKEND_URL points to the Railway-hosted API
+// In development (localhost:5000), same-origin is used
+const BACKEND_URL = (() => {
+    const h = window.location.hostname;
+    if (h === 'localhost' || h === '127.0.0.1') return 'http://localhost:5000';
+    // Production: set this to your Railway/Render backend URL
+    // e.g. 'https://dashdrop-production.up.railway.app'
+    return window.DASHDROP_BACKEND_URL || window.location.origin;
+})();
+
+const API = `${BACKEND_URL}/api`;
 
 function getAuthToken() {
     return localStorage.getItem('dashdrop_token');
@@ -213,7 +221,7 @@ function initGlobalNotificationSocket() {
     if (globalNotifSocket && globalNotifSocket.connected) return;
 
     try {
-        globalNotifSocket = io({ auth: { token } });
+        globalNotifSocket = io(BACKEND_URL, { auth: { token } });
         globalNotifSocket.on('new_notification', (notif) => {
             handleIncomingNotification(notif);
         });
@@ -1127,7 +1135,7 @@ function connectChatSocket(itemId, buyerId, user) {
     if (!token) return;
 
     // socket.io.js served by backend at /socket.io/socket.io.js
-    chatSocket = io({ auth: { token } });
+    chatSocket = io(BACKEND_URL, { auth: { token } });
 
     chatSocket.on('connect', () => {
         chatSocket.emit('join_room', { itemId, buyerId });
@@ -1973,7 +1981,7 @@ function connectAccountChatSocket(itemId, buyerId, user) {
     const token = localStorage.getItem('dashdrop_token');
     if (!token) return;
 
-    accChatSocket = io({ auth: { token } });
+    accChatSocket = io(BACKEND_URL, { auth: { token } });
 
     accChatSocket.on('connect', () => {
         accChatSocket.emit('join_room', { itemId, buyerId });

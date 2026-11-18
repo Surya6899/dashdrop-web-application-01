@@ -1,0 +1,21 @@
+{
+  "version": 2,
+  "name": "dashdrop-campus-marketplace",
+  "builds": [
+    {
+      "src": "frontend/**",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    { "src": "/items", "dest": "/frontend/items.html" },
+    { "src": "/rent", "dest": "/frontend/rent.html" },
+    { "src": "/sell", "dest": "/frontend/sell.html" },
+    { "src": "/account", "dest": "/frontend/account.html" },
+    { "src": "/", "dest": "/frontend/index.html" },
+    { "src": "/(.*\\.html)", "dest": "/frontend/$1" },
+    { "src": "/(.*\\.css)", "dest": "/frontend/$1" },
+    { "src": "/(.*\\.js)", "dest": "/frontend/$1" },
+    { "src": "/(.*)", "dest": "/frontend/$1" }
+  ]
+}
