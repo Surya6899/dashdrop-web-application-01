@@ -20,9 +20,8 @@ const allowedOrigins = [
     'http://localhost:5000',
     'http://localhost:5500',
     'http://127.0.0.1:5500',
-    // Add your Vercel URL here after first deployment:
-    // 'https://dashdrop-campus-marketplace.vercel.app',
-    // pattern match all vercel preview URLs:
+    'https://dashdrop-web-application-01.vercel.app',
+    'https://dashdrop-campus-marketplace.vercel.app',
     /https:\/\/dashdrop.*\.vercel\.app$/,
     /https:\/\/.*\.vercel\.app$/
 ];
